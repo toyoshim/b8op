@@ -1,0 +1,21 @@
+<html>
+<body style="margin: 0">
+<script src="tmalib/tma.js"></script>
+<script>
+tma.extlibs = [ '../gl-matrix/dist/gl-matrix.js', 'ext/mv/MajVj.js' ];
+tma.onload = function () {
+  MajVj.loadAllPlugins().then(() => {
+    var mv = new MajVj();
+    var frame = mv.create('misc', 'host', {
+        type: 'external',
+        name: 'countdown',
+        path: 'scenes/countdown_backup.js'
+    });
+    mv.run(function (delta) {
+      frame.draw(delta);
+    });
+  });
+};
+</script>
+</body>
+</html>
