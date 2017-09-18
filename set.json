@@ -18,6 +18,7 @@
       "name": "countdown",
       "path": "scenes/countdown.js",
       "map": {
+        "7": { "name": "soundGain", "offset": 0, "scale": 0.007874015748031496, "type": "fader" },
         "32": { "name": "test1", "offset": 0, "scale": 1.0, "type": "button" },
         "39": { "name": "start", "offset": 0, "scale": 1.0, "type": "button" }
       }

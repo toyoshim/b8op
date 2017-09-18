@@ -8,26 +8,33 @@ MajVj.external.countdown = function(options) {
   this._screen = options.screen;
   this._random = options.mv.create('misc', 'random');
   this._rotate = 0;
+  this._rotateRate = 1;
   this._paused = true;
+  this._showSnap = false;
   this.properties = {
     'test1': 0,
     'start': 0,
+    'soundGain' : 1.0,
   };
   this._lastProperties = {
     'test1': 0,
     'start': 0,
+    'soundGain' : 1.0,
   };
 
   // Setups effect module.
   this._effect = options.mv.create('effect', 'noise', {
-			enable: ['color', 'tube', 'film']
+//			enable: ['color', 'tube', 'film']
+			enable: ['color', 'tube', 'film', 'noise']
 //      disable: ['color', 'slitscan', 'noise']
   });
-//  this._effect.properties.noise_level = [0.0, 0.1, 0.0];
-//  this._effect.properties.noise_color = [1, 1, 0];
+  this._effect.properties.noise_level = [0.0, 0.1, 0.0];
+  this._effect.properties.noise_color = [1, 1, 0];
 	this._effect.properties.color_shift = [0, 0, 0];
-	this._effect.properties.color_level = [0.107, 0.074, 0.043];
-	this._effect.properties.color_weight = [0.4, 0.7, 1.0];
+	//this._effect.properties.color_level = [0.107, 0.074, 0.043];
+	this._effect.properties.color_level = [0.5, 0.5, 0.8];
+	//this._effect.properties.color_weight = [0.4, 0.7, 1.0];
+	this._effect.properties.color_weight = [0.5, 0.5, 0.5];
   this._fbo = options.mv.screen().createFrameBuffer();
 
   // Setups 3D API interface.
@@ -44,10 +51,15 @@ MajVj.external.countdown = function(options) {
       TmaModelPrimitives.SPHERE_METHOD_EVEN,
       TmaModelPrimitives.SPHERE_FLAG_NO_TEXTURE
   );
-  this._sphereVertices = this._sphere.getVertices().slice(0);
+  this._earth = TmaModelPrimitives.createSphere(4, TmaModelPrimitives.SPHERE_METHOD_EVEN);
+  this._earth.setTexture(this._screen.createTexture(MajVj.external.countdown._earth));
+  this._earthAlpha = 0.0;
 
   this._stars = TmaModelPrimitives.createStars(10000, 30000);
   
+  this._snapbox = TmaModelPrimitives.createBox();
+  this._snapbox.setTexture(this._screen.createTexture(MajVj.external.countdown._awsnap));
+
   // Setups BGM data.
   this._bgm = this._mv.create('misc', 'sound');
   this._bgmReady = false;
@@ -77,11 +89,16 @@ MajVj.external.countdown = function(options) {
   }
   this._number = 10;
   this._numberRate = 0;
-//  this._count = 0;
+
+  // Setups Aw, Snap screen.
+  this._snapFrame = options.mv.create('frame', 'api3d', {
+    draw: this._drawSnap.bind(this)
+  });
+  this._snapZoom = options.mv.create('effect', 'zoom');
 
   this._numberSequencer = new TmaSequencer();
   const sequence = new TmaSequencer.SerialTask();
-  const duration = 450;
+  const duration = 461;
   sequence.append(new TmaSequencer.Task(duration, (_1, _2, time) => { this._number = 9; this._numberRate = 0; }));
   sequence.append(new TmaSequencer.Task(duration * 6), () => {});
   sequence.append(new TmaSequencer.Task(duration, (_1, _2, time) => { this._number = 9; this._numberRate = time / duration; }));
@@ -97,7 +114,26 @@ MajVj.external.countdown = function(options) {
   sequence.append(new TmaSequencer.Task(duration, (_1, _2, time) => { this._number = 3; this._numberRate = time / duration; }));
   sequence.append(new TmaSequencer.Task(duration, (_1, _2, time) => { this._number = 2; this._numberRate = time / duration; }));
   sequence.append(new TmaSequencer.Task(duration, (_1, _2, time) => { this._number = 1; this._numberRate = time / duration; }));
-  this._numberSequencer.register(750, sequence);
+  sequence.append(new TmaSequencer.Task(duration * 2, () => { this._showSnap = true; }));
+  sequence.append(new TmaSequencer.Task(duration, () => { this._snapZoom.properties.multi = [2, 2]; }));
+  sequence.append(new TmaSequencer.Task(duration, () => { this._snapZoom.properties.multi = [4, 4]; }));
+  sequence.append(new TmaSequencer.Task(0, () => {
+    this._showSnap = false;
+    this._number = 10;
+    this._rotateRate = 2;
+    this._camera.lookTo(0, [0, 0, -1]);
+    this._camera.moveTo(duration * 4, [0, 0, 500]);
+  }));
+  sequence.append(new TmaSequencer.Task(duration, (_1, _2, time) => { this._earthAlpha = time / duration; }));
+  sequence.append(new TmaSequencer.RepeatTask(new TmaSequencer.Task(duration, (_1, _2, time) => {
+    this._blink = time / duration;
+  }), -1));
+  this._numberSequencer.register(770, sequence);
+
+  // Setups NicoMoji strings. 
+  this._nicoMojiBox = TmaModelPrimitives.createBox();
+  this._nicoMojiList = [];
+  this.blink = 0;
 };
 
 /** Loads resources asynchronously.
@@ -105,15 +141,21 @@ MajVj.external.countdown = function(options) {
  */
 MajVj.external.countdown.load = function () {
   return new Promise((resolve, reject) => {
-    MajVj.loadImageFrom('scenes/awsnap.png').then(image => {
-      MajVj.external.countdown._awsnap = image;
-      console.log(image.width);
+    const font = new FontFace('NicoMoji', 'url(scenes/nicomoji-plus_1.11.ttf)');
+    Promise.all([
+      MajVj.loadImageFrom('scenes/awsnap.png'),
+      MajVj.loadImageFrom('scenes/earth.png'),
+      font.load()
+    ]).then(results => {
+      MajVj.external.countdown._awsnap = results[0];
+      MajVj.external.countdown._earth = results[1];
       resolve();
     });
   });
 }
 
 MajVj.external.countdown._awsnap = null;
+MajVj.external.countdown._earth = null;
 MajVj.external.countdown._number_patterns = [
   /* 0 */ [ [-1, -1, 1, -1], [1, -1, 1, 1], [-1, 1, 1, 1], [-1, -1, -1, 1] ],
   /* 1 */ [ [0, -1, 0, 1] ],
@@ -127,6 +169,31 @@ MajVj.external.countdown._number_patterns = [
   /* 9 */ [ [-1, -1, 1, -1], [-1, 0, 1, 0], [1, -1, 1, 1], [-1, 1, 1, 1], [-1, -1, -1, 0] ],
 ];
 
+MajVj.external.countdown._messages = [
+  'Welcome to TOKYO',
+  'BlinkOn 8', 'BlinkOn 8', 'BlinkOn 8', 'BlinkOn 8', 'BlinkOn 8',
+  'ようこそ',
+  '歓迎',
+  'ｷﾀ━━━━(ﾟ∀ﾟ)━━━━!!',
+  '日本',
+  '♨',
+  '東京',
+  'Blink',
+  'WWW',
+  'www',
+  'Open Web Platform',
+  'Google Tokyo',
+  '＼(^o^)／',
+  '・ω・',
+  '(^o^)',
+  'ლ(´ڡ`ლ)',
+  '(≧∇≦)/',
+  'ΩΩΩ<な、なんだってー!?',
+  'ｷﾀ━━(゜∀゜)━( ゜∀)━( 　゜)━(　　)━(　　)━(゜ 　)━(∀゜ )━(゜∀゜)━━!!!!!',
+  '(#ﾉﾟДﾟ)ﾉ　･ﾟ･┻┻ﾟ･:.｡o',
+  '＼(゜ロ＼)(／ロ゜)／',
+];
+
 /**
  * Draws a frame.
  * @param delta delta time from the last rendering
@@ -138,23 +205,43 @@ MajVj.external.countdown.prototype.draw = function(delta) {
   this._frame.properties.orientation = this._camera.orientation();
 
   // Updates rendering primitives.
-  this._rotate += delta / 50000;
+  this._rotate += delta / 50000 * this._rotateRate;
 
-  // Renders to offline screen.
   const screen = this._fbo.bind();
-  this._screen.fillColor(0.3, 0.2, 0.4, 1);
-  this._frame.draw(delta);
+  
+  if (this._showSnap) {
+    // Renders to offline screen.
+    this._screen.fillColor(0, 0, 0, 1);
+    this._snapFrame.draw(delta);
+    
+    // Renders to screen with effects.
+    screen.bind();
+    this._screen.fillColor(0, 0, 0, 1);
+    this._snapZoom.draw(delta, this._fbo.texture);
+    
+    // Continues to run sequencer.
+    this._numberSequencer.run(delta);
+  } else {
+    // Renders to offline screen.
+    this._screen.fillColor(0.3, 0.2, 0.4, 1);
+    this._frame.draw(delta);
 
-  // Renders to screen with effects.
-  screen.bind();
-  this._screen.fillColor(0, 0, 0, 1);
-  // Use Math.random() because draw() calls are not reproducible.
-  this._effect.properties.volume = Math.random() * 0.03;
-  this._effect.draw(delta, this._fbo.texture);
+    // Renders to screen with effects.
+    screen.bind();
+    this._screen.fillColor(0.2, 0.1, 0.2, 1);
+    // Use Math.random() because draw() calls are not reproducible.
+    this._effect.properties.volume = Math.random() * 0.03;
+    this._effect.draw(delta, this._fbo.texture);
+  }
+ 
+  // BGM Volume update.
+  if (this.properties.soundGain != this._lastProperties.soundGain)
+    this._bgm.setGain(this.properties.soundGain);
   
   // Backup properties.
   this._lastProperties.test1 = this.properties.test1;
   this._lastProperties.start = this.properties.start;
+  this._lastProperties.soundGain = this.properties.soundGain;
 };
 
 MajVj.external.countdown.prototype._drawNumber = function(api, n) {
@@ -167,8 +254,6 @@ MajVj.external.countdown.prototype._drawNumber = function(api, n) {
 };
 
 MajVj.external.countdown.prototype._drawNumber = function(api, n1, n2, rate) {
-  api.setAlphaMode(true, api.gl.ONE, api.gl.ONE);
-  api.color = [0.5, 0.5, 1.0, 1.0];
   const p1 = this._patterns[n1];
   const p2 = this._patterns[n2];
   const r1 = 1 - rate;
@@ -183,11 +268,32 @@ MajVj.external.countdown.prototype._drawNumber = function(api, n1, n2, rate) {
 };
 
 MajVj.external.countdown.prototype._draw = function(api) {
-  api.color = [0.05, 0.05, 0.3, 1.0];
-  const rotate = [ [ 0, this._rotate, 0 ] ];
+  const rotate = [ [-Math.PI / 2.0, 0.0, this._rotate] ];
+  api.setAlphaMode(false);
+  api.drawPrimitive(this._earth, 100, 100, 100, [0, 0, 0], rotate, this._earthAlpha / 2.0 * (0.5 + this._blink / 4));
+ 
+  api.setAlphaMode(true);
+  const l = 1.2 - this._earthAlpha / 2;
+  api.color = [0.05 * l, 0.05 * l, 0.3 * l, 1.0];
   api.drawPrimitive(this._stars, 0.02, 0.02, 0.02, [0, 0, 0], rotate);
   api.drawPrimitive(this._sphere, 100, 100, 100, [0, 0, 0], rotate);
 
+  const nicoMojiList = this._nicoMojiList;
+  this._nicoMojiList = [];
+  for (let nicoMoji of nicoMojiList) {
+    this._nicoMojiBox.setTexture(nicoMoji.texture);
+    if (this._blink < 0.75) {
+      api.drawPrimitive(
+          this._nicoMojiBox, nicoMoji.texture.width / 2, nicoMoji.texture.height / 2, 1, nicoMoji.position);
+    }
+    nicoMoji.position[0] -= nicoMoji.v;
+    if (nicoMoji.position[0] > -1000)
+      this._nicoMojiList.push(nicoMoji);
+  }
+  if (this._random.generate() > 0.97)
+    this._appendNicoMoji();
+ 
+  
   if (this._paused) {
     if (this._lastProperties.start && !this.properties.start && this._bgmReady) {
       this._paused = false;
@@ -197,8 +303,33 @@ MajVj.external.countdown.prototype._draw = function(api) {
   }
   
   this._numberSequencer.run(api.delta);
-  if (this._number < 10) {
+  if (this._number < 10 && this._earthAlpha < 0.5) {
+    api.color = [0.5 * l, 0.5 * l, 1.0 * l, 1.0];
+    api.setAlphaMode(true, api.gl.ONE, api.gl.ONE);
     this._drawNumber(api, this._number, this._number - 1, TmaTimeline.convert(
-        'cubic-bezier', this._numberRate, { x1: 0.80, y1: 0.0, x2: 1.0, y2: 1.0}));
+        'cubic-bezier', this._numberRate, { x1: 0.90, y1: 0.0, x2: 1.0, y2: 1.0}));
   }
+};
+
+MajVj.external.countdown.prototype._drawSnap = function(api) {
+  api.setAlphaMode(false);
+  api.fill([242 / 255, 241 / 255, 239 / 255, 1]);
+  const aspect = MajVj.external.countdown._awsnap.height / MajVj.external.countdown._awsnap.width;
+  api.drawPrimitive(this._snapbox, 1, aspect, 0, [0, 0, -1]);
+};
+
+MajVj.external.countdown.prototype._appendNicoMoji = function () {
+  const message = this._random.generate(0, MajVj.external.countdown._messages.length) | 0;
+  const r = this._random.generate(100, 150) | 0;
+  const g = this._random.generate(100, 150) | 0;
+  const b = this._random.generate(100, 150) | 0;
+  const color = 'rgb(' + r + ',' + g + ',' + b + ')';
+  const texture = this._screen.createStringTexture(
+        MajVj.external.countdown._messages[message], { name: 'NicoMoji', size: 64, foreground: color });
+  const z = this._random.generate(1, 3);
+  this._nicoMojiList.push({
+    texture: texture,
+    position: [300 + texture.width / 2, this._random.generate(-150, 150), 100 * z],
+    v: this._random.generate(0.5, 4)
+  });
 };
