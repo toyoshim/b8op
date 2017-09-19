@@ -4,8 +4,7 @@
   "description": "Blink8 opening demo",
   "main": "web.js",
   "scripts": {
-    "test": "echo \"OK: no test\" && exit 0",
-    "postinstall": "./postinstall.sh"
+    "test": "echo \"OK: no test\" && exit 0"
   },
   "author": "toyoshim@gmail.com",
   "license": "New BSD",
