@@ -63,9 +63,10 @@ MajVj.external.countdown = function(options) {
   // Setups BGM data.
   this._bgm = this._mv.create('misc', 'sound');
   this._bgmReady = false;
-  this._bgm.fetch('scenes/bgm.mp3', false).then(() => {
+  tma.log('loading bgm...');
+  this._bgm.fetch('scenes/bgm2.mp3', false).then(() => {
     this._bgmReady = true;
-    console.log('bgm sound ready');
+    tma.log('bgm sound ready');
   });
   
   // Setups number data.
@@ -96,27 +97,32 @@ MajVj.external.countdown = function(options) {
   });
   this._snapZoom = options.mv.create('effect', 'zoom');
 
+  // tempo = 122 (beat = 0.4918032786885246 sec)
   this._numberSequencer = new TmaSequencer();
   const sequence = new TmaSequencer.SerialTask();
-  const duration = 461;
-  sequence.append(new TmaSequencer.Task(duration, (_1, _2, time) => { this._number = 9; this._numberRate = 0; }));
-  sequence.append(new TmaSequencer.Task(duration * 6), () => {});
+  const duration = 491.8032786885246;
+  sequence.append(new TmaSequencer.Task(0, (_1, _2, time) => { this._number = 9; this._numberRate = 0; }));
+  sequence.append(new TmaSequencer.Task(duration, () => {}));
   sequence.append(new TmaSequencer.Task(duration, (_1, _2, time) => { this._number = 9; this._numberRate = time / duration; }));
-  sequence.append(new TmaSequencer.Task(duration * 7), () => {});
+  sequence.append(new TmaSequencer.Task(duration, () => {}));
   sequence.append(new TmaSequencer.Task(duration, (_1, _2, time) => { this._number = 8; this._numberRate = time / duration; }));
-  sequence.append(new TmaSequencer.Task(duration * 3), () => {});
+  sequence.append(new TmaSequencer.Task(duration, () => {}));
   sequence.append(new TmaSequencer.Task(duration, (_1, _2, time) => { this._number = 7; this._numberRate = time / duration; }));
-  sequence.append(new TmaSequencer.Task(duration * 1), () => {});
+  sequence.append(new TmaSequencer.Task(duration, () => {}));
   sequence.append(new TmaSequencer.Task(duration, (_1, _2, time) => { this._number = 6; this._numberRate = time / duration; }));
-  sequence.append(new TmaSequencer.Task(duration * 1), () => {});
+  sequence.append(new TmaSequencer.Task(duration, () => {}));
   sequence.append(new TmaSequencer.Task(duration, (_1, _2, time) => { this._number = 5; this._numberRate = time / duration; }));
+  sequence.append(new TmaSequencer.Task(duration, () => {}));
   sequence.append(new TmaSequencer.Task(duration, (_1, _2, time) => { this._number = 4; this._numberRate = time / duration; }));
+  sequence.append(new TmaSequencer.Task(duration, () => {}));
   sequence.append(new TmaSequencer.Task(duration, (_1, _2, time) => { this._number = 3; this._numberRate = time / duration; }));
+  sequence.append(new TmaSequencer.Task(duration, () => {}));
   sequence.append(new TmaSequencer.Task(duration, (_1, _2, time) => { this._number = 2; this._numberRate = time / duration; }));
+  sequence.append(new TmaSequencer.Task(duration, () => {}));
   sequence.append(new TmaSequencer.Task(duration, (_1, _2, time) => { this._number = 1; this._numberRate = time / duration; }));
-  sequence.append(new TmaSequencer.Task(duration * 2, () => { this._showSnap = true; }));
-  sequence.append(new TmaSequencer.Task(duration, () => { this._snapZoom.properties.multi = [2, 2]; }));
-  sequence.append(new TmaSequencer.Task(duration, () => { this._snapZoom.properties.multi = [4, 4]; }));
+  sequence.append(new TmaSequencer.Task(duration, () => { this._showSnap = true; }));
+  sequence.append(new TmaSequencer.Task(duration / 2, () => { this._snapZoom.properties.multi = [2, 2]; }));
+  sequence.append(new TmaSequencer.Task(duration / 2, () => { this._snapZoom.properties.multi = [4, 4]; }));
   sequence.append(new TmaSequencer.Task(0, () => {
     this._showSnap = false;
     this._number = 10;
@@ -128,7 +134,7 @@ MajVj.external.countdown = function(options) {
   sequence.append(new TmaSequencer.RepeatTask(new TmaSequencer.Task(duration, (_1, _2, time) => {
     this._blink = time / duration;
   }), -1));
-  this._numberSequencer.register(770, sequence);
+  this._numberSequencer.register(duration * 2 - 100, sequence);
 
   // Setups NicoMoji strings. 
   this._nicoMojiBox = TmaModelPrimitives.createBox();
@@ -172,13 +178,19 @@ MajVj.external.countdown._number_patterns = [
 MajVj.external.countdown._messages = [
   'Welcome to TOKYO',
   'BlinkOn 8', 'BlinkOn 8', 'BlinkOn 8', 'BlinkOn 8', 'BlinkOn 8',
+  'BlinkOn', 'BlinkOn', 'BlinkOn', 'BlinkOn', 'BlinkOn', 'BlinkOn', 'BlinkOn', 'BlinkOn',
+  'Blink',
+  'Blink Blink Blink!!',
+  'Let\'s Blink !',
+  '<blink>',
   'ようこそ',
   '歓迎',
   'ｷﾀ━━━━(ﾟ∀ﾟ)━━━━!!',
   '日本',
   '♨',
   '東京',
-  'Blink',
+  'TOKYO',
+  'T O K Y O',
   'WWW',
   'www',
   'Open Web Platform',
@@ -192,6 +204,16 @@ MajVj.external.countdown._messages = [
   'ｷﾀ━━(゜∀゜)━( ゜∀)━( 　゜)━(　　)━(　　)━(゜ 　)━(∀゜ )━(゜∀゜)━━!!!!!',
   '(#ﾉﾟДﾟ)ﾉ　･ﾟ･┻┻ﾟ･:.｡o',
   '＼(゜ロ＼)(／ロ゜)／',
+  'Web',
+  'ウェブ',
+  'World Wide Web',
+  '88888888',
+  '8888',
+  '888888888888888',
+  '88888888888',
+  '8888888888888888888888',
+  '88888',
+  '88888888888888888',
 ];
 
 /**
@@ -320,9 +342,9 @@ MajVj.external.countdown.prototype._drawSnap = function(api) {
 
 MajVj.external.countdown.prototype._appendNicoMoji = function () {
   const message = this._random.generate(0, MajVj.external.countdown._messages.length) | 0;
-  const r = this._random.generate(100, 150) | 0;
-  const g = this._random.generate(100, 150) | 0;
-  const b = this._random.generate(100, 150) | 0;
+  const r = this._random.generate(80, 150) | 0;
+  const g = this._random.generate(80, 150) | 0;
+  const b = this._random.generate(80, 150) | 0;
   const color = 'rgb(' + r + ',' + g + ',' + b + ')';
   const texture = this._screen.createStringTexture(
         MajVj.external.countdown._messages[message], { name: 'NicoMoji', size: 64, foreground: color });

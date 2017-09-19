@@ -1,18 +1,60 @@
 <html>
+<head><meta charset="UTF-8"></head>
 <body style="margin: 0">
+<iframe
+  src="softKONTROL.html"
+  width="1300px"
+  height="450px">
+</iframe>
+<div id="controllers" style="margin: 4pt;"></div>
+<hr>
+<div id="majvj"></div>
 <script src="tmalib/tma.js"></script>
 <script>
+
+function addButton(name, id, host) {
+  var input = document.createElement('input');
+  input.setAttribute('type', 'button');
+  input.setAttribute('value', name);
+  input.addEventListener('mousedown', e => host.properties.controls[id] = 127);
+  input.addEventListener('mouseup', e => host.properties.controls[id] = 0);
+  document.getElementById('controllers').appendChild(input);
+};
+
 tma.extlibs = [ '../gl-matrix/dist/gl-matrix.js', 'ext/mv/MajVj.js' ];
-tma.onload = function () {
-  MajVj.loadAllPlugins().then(() => {
-    var mv = new MajVj();
-    var frame = mv.create('misc', 'host', {
-        type: 'external',
-        name: 'countdown',
-        path: 'scenes/countdown_backup.js'
-    });
-    mv.run(function (delta) {
-      frame.draw(delta);
+tma.onload = () => {
+  Promise.all([
+    fetch('set_backup.json'),
+    MajVj.loadAllPlugins()
+  ]).then(results => {
+    results[0].json().then(json => {
+      const data = json.sets[0];
+      document.title = data.title;
+      //console.log(data);
+      const mv = new MajVj(1920, 1080, false, document.getElementById('majvj'));
+      const frame = mv.create('misc', 'host', data);
+      navigator.requestMIDIAccess().then(a => {
+        for (var port of a.inputs.values()) {
+          port.addEventListener('midimessage', e => {
+            if ((e.data[0] & 0xf0) == 0xb0) {
+              frame.properties.controls[e.data[1]] = e.data[2];
+            }
+          })
+        }
+      });
+      window.addEventListener('message', e => {
+        if (e.data.type == 'vMIDI')
+          frame.properties.controls[e.data.control] = e.data.value;
+      });
+      for (let key in data.map) {
+        if (!key)
+          break;
+        if (data.map[key].type == "button")
+          addButton(data.map[key].name, key, frame);
+      }
+      mv.run(delta => {
+        frame.draw(delta);
+      });
     });
   });
 };

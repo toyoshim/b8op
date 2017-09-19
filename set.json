@@ -5,12 +5,11 @@
     {
       "title": "BlinkON8 opening countdown",
       "comments": [
-        "SOUND: None",
-        "FADER (INIT):",
+        "フェーダー配置:",
         " N/A (＊) | N/A (＊) | N/A (＊)",
-        " N/A (＊) | N/A (＊) | N/A (＊)",
-        "CTRL:",
-        " S: N/A | N/A | N/A",
+        " N/A (＊) | N/A (＊) | Sound Volume (127)",
+        "ボタン配置:",
+        " S: N/A | N/A | Start",
         " M: N/A | N/A | N/A",
         " R: N/A | N/A | N/A"
       ],
