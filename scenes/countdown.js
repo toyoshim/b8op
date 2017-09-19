@@ -64,7 +64,7 @@ MajVj.external.countdown = function(options) {
   this._bgm = this._mv.create('misc', 'sound');
   this._bgmReady = false;
   tma.log('loading bgm...');
-  this._bgm.fetch('scenes/bgm2.mp3', false).then(() => {
+  this._bgm.fetch('scenes/bgm3.mp3', false).then(() => {
     this._bgmReady = true;
     tma.log('bgm sound ready');
   });
@@ -102,39 +102,40 @@ MajVj.external.countdown = function(options) {
   const sequence = new TmaSequencer.SerialTask();
   const duration = 491.8032786885246;
   sequence.append(new TmaSequencer.Task(0, (_1, _2, time) => { this._number = 9; this._numberRate = 0; }));
-  sequence.append(new TmaSequencer.Task(duration, () => {}));
+  sequence.append(new TmaSequencer.Task(duration * 3, () => {}));
   sequence.append(new TmaSequencer.Task(duration, (_1, _2, time) => { this._number = 9; this._numberRate = time / duration; }));
-  sequence.append(new TmaSequencer.Task(duration, () => {}));
+  sequence.append(new TmaSequencer.Task(duration * 3, () => {}));
   sequence.append(new TmaSequencer.Task(duration, (_1, _2, time) => { this._number = 8; this._numberRate = time / duration; }));
-  sequence.append(new TmaSequencer.Task(duration, () => {}));
+  sequence.append(new TmaSequencer.Task(duration * 3, () => {}));
   sequence.append(new TmaSequencer.Task(duration, (_1, _2, time) => { this._number = 7; this._numberRate = time / duration; }));
-  sequence.append(new TmaSequencer.Task(duration, () => {}));
+  sequence.append(new TmaSequencer.Task(duration * 3, () => {}));
   sequence.append(new TmaSequencer.Task(duration, (_1, _2, time) => { this._number = 6; this._numberRate = time / duration; }));
-  sequence.append(new TmaSequencer.Task(duration, () => {}));
+  sequence.append(new TmaSequencer.Task(duration * 3, () => {}));
   sequence.append(new TmaSequencer.Task(duration, (_1, _2, time) => { this._number = 5; this._numberRate = time / duration; }));
-  sequence.append(new TmaSequencer.Task(duration, () => {}));
+  sequence.append(new TmaSequencer.Task(duration * 3, () => {}));
   sequence.append(new TmaSequencer.Task(duration, (_1, _2, time) => { this._number = 4; this._numberRate = time / duration; }));
-  sequence.append(new TmaSequencer.Task(duration, () => {}));
+  sequence.append(new TmaSequencer.Task(duration * 3, () => {}));
   sequence.append(new TmaSequencer.Task(duration, (_1, _2, time) => { this._number = 3; this._numberRate = time / duration; }));
-  sequence.append(new TmaSequencer.Task(duration, () => {}));
+  sequence.append(new TmaSequencer.Task(duration * 3, () => {}));
   sequence.append(new TmaSequencer.Task(duration, (_1, _2, time) => { this._number = 2; this._numberRate = time / duration; }));
-  sequence.append(new TmaSequencer.Task(duration, () => {}));
+  sequence.append(new TmaSequencer.Task(duration * 3, () => {}));
   sequence.append(new TmaSequencer.Task(duration, (_1, _2, time) => { this._number = 1; this._numberRate = time / duration; }));
-  sequence.append(new TmaSequencer.Task(duration, () => { this._showSnap = true; }));
-  sequence.append(new TmaSequencer.Task(duration / 2, () => { this._snapZoom.properties.multi = [2, 2]; }));
-  sequence.append(new TmaSequencer.Task(duration / 2, () => { this._snapZoom.properties.multi = [4, 4]; }));
+  sequence.append(new TmaSequencer.Task(duration * 2, () => { this._showSnap = true; }));
+  sequence.append(new TmaSequencer.Task(duration, () => { this._snapZoom.properties.multi = [2, 2]; }));
+  sequence.append(new TmaSequencer.Task(duration, () => { this._snapZoom.properties.multi = [4, 4]; }));
   sequence.append(new TmaSequencer.Task(0, () => {
     this._showSnap = false;
     this._number = 10;
     this._rotateRate = 2;
     this._camera.lookTo(0, [0, 0, -1]);
-    this._camera.moveTo(duration * 4, [0, 0, 500]);
+    this._camera.moveTo(duration * 2, [0, 0, 500]);
   }));
-  sequence.append(new TmaSequencer.Task(duration, (_1, _2, time) => { this._earthAlpha = time / duration; }));
+  sequence.append(new TmaSequencer.Task(0, (_1, _2, time) => { this._earthAlpha = 0.6; }));
+  sequence.append(new TmaSequencer.Task(duration - 100, () => {}));
   sequence.append(new TmaSequencer.RepeatTask(new TmaSequencer.Task(duration, (_1, _2, time) => {
     this._blink = time / duration;
   }), -1));
-  this._numberSequencer.register(duration * 2 - 100, sequence);
+  this._numberSequencer.register(0, sequence);
 
   // Setups NicoMoji strings. 
   this._nicoMojiBox = TmaModelPrimitives.createBox();
