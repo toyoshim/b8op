@@ -8,7 +8,7 @@ app.use(cors());
 app.use(logfmt.requestLogger());
 
 var collection = process.env.DEBUG ? 'log-debug' : 'log';
-momolog.connect(process.env.MONGOLAB_URI, collection).then(function(logger) {
+momolog.connect(process.env.MONGODB_URI, collection).then(function(logger) {
   app.use(logger);
 
   app.use(express.static(__dirname));
