@@ -52,7 +52,8 @@ MajVj.external.countdown = function(options) {
       TmaModelPrimitives.SPHERE_FLAG_NO_TEXTURE
   );
   this._earth = TmaModelPrimitives.createSphere(4, TmaModelPrimitives.SPHERE_METHOD_EVEN);
-  this._earth.setTexture(this._screen.createTexture(MajVj.external.countdown._earth));
+  this._earth.setTexture(this._screen.createTexture(
+      MajVj.external.countdown._earth, true, Tma3DScreen.FILTER_NEAREST));
   this._earthAlpha = 0.0;
 
   this._stars = TmaModelPrimitives.createStars(10000, 30000);
@@ -147,12 +148,20 @@ MajVj.external.countdown = function(options) {
  * @return a Promise oeject
  */
 MajVj.external.countdown.load = function () {
-  return new Promise((resolve, reject) => {
-    const font = new FontFace('NicoMoji', 'url(scenes/nicomoji-plus_1.11.ttf)');
+ return new Promise((resolve, reject) => {
     Promise.all([
       MajVj.loadImageFrom('scenes/awsnap.png'),
-      MajVj.loadImageFrom('scenes/earth.png'),
-      font.load()
+      MajVj.loadImageFrom('scenes/earth2.png'),
+      new Promise(resolve => {
+        const link = document.createElement('link');
+        link.setAttribute('href', 'https://fonts.googleapis.com/earlyaccess/nicomoji.css');
+        link.setAttribute('rel', 'stylesheet');
+        link.addEventListener('load', e => {
+          document.fonts.load('10px Nico Moji');
+          document.fonts.ready.then(() => resolve());
+        });
+        document.head.appendChild(link);
+      })
     ]).then(results => {
       MajVj.external.countdown._awsnap = results[0];
       MajVj.external.countdown._earth = results[1];
@@ -293,7 +302,7 @@ MajVj.external.countdown.prototype._drawNumber = function(api, n1, n2, rate) {
 MajVj.external.countdown.prototype._draw = function(api) {
   const rotate = [ [-Math.PI / 2.0, 0.0, this._rotate] ];
   api.setAlphaMode(false);
-  api.drawPrimitive(this._earth, 100, 100, 100, [0, 0, 0], rotate, this._earthAlpha / 2.0 * (0.5 + this._blink / 4));
+  api.drawPrimitive(this._earth, 100, 100, 100, [0, 0, 0], rotate, this._earthAlpha * (0.5 + this._blink / 4));
  
   api.setAlphaMode(true);
   const l = 1.2 - this._earthAlpha / 2;
@@ -348,7 +357,7 @@ MajVj.external.countdown.prototype._appendNicoMoji = function () {
   const b = this._random.generate(80, 150) | 0;
   const color = 'rgb(' + r + ',' + g + ',' + b + ')';
   const texture = this._screen.createStringTexture(
-        MajVj.external.countdown._messages[message], { name: 'NicoMoji', size: 64, foreground: color });
+        MajVj.external.countdown._messages[message], { name: 'Nico Moji', size: 64, foreground: color });
   const z = this._random.generate(1, 3);
   this._nicoMojiList.push({
     texture: texture,
